@@ -97,6 +97,24 @@ void reloadTextures(SDL_Renderer* renderer, std::vector<std::string>& files, int
     }
 }
 
+void parseWHFromFilename(const std::string& filename, int& w, int& h) {
+    size_t wpos = filename.find("_w[");
+    size_t hpos = filename.find("_h[");
+    if (wpos != std::string::npos) {
+        size_t wstart = wpos + 3;
+        size_t wend = filename.find("]", wstart);
+        if (wend != std::string::npos) {
+            w = std::stoi(filename.substr(wstart, wend - wstart));
+        }
+    }
+    if (hpos != std::string::npos) {
+        size_t hstart = hpos + 3;
+        size_t hend = filename.find("]", hstart);
+        if (hend != std::string::npos) {
+            h = std::stoi(filename.substr(hstart, hend - hstart));
+        }
+    }
+}
 
 int main(int argc, char* argv[]) {
     std::string folder;
@@ -104,14 +122,18 @@ int main(int argc, char* argv[]) {
     // 参数检查
     if (argc == 2 && std::string(argv[1]) == "-h") {
         std::cout << "Usage:\n";
-        std::cout << "  SimpleYUVPlayer.exe WIDTH HEIGHT STRIDE DIRECTORY\n";
-        std::cout << "Example:\n";
-        std::cout << "  SimpleYUVPlayer.exe 1920 1080 1920 D:\\yuv\n";
+        std::cout << "  1. SimpleYUVPlayer.exe . #读取第一个文件的名字，更改宽高 \n";
+        std::cout << "  2. SimpleYUVPlayer.exe WIDTH HEIGHT STRIDE DIRECTORY #自己设置宽高、偏移、文件夹 \n";
+        std::cout << "  3. 双击SimpleYUVPlayer.exe \n";
         return 0;
     }
 
     // 解析命令行参数
-    if (argc >= 3) {
+    if (argc == 2 && std::string(argv[1]) == ".") {
+        // 命令行执行 SimpleYUVPlayer .
+        folder = ".";
+    }
+    else if (argc >= 3) {
             WIDTH = std::stoi(argv[1]);
             HEIGHT = std::stoi(argv[2]);
             STRIDE = WIDTH; // 默认 stride = width
@@ -152,6 +174,19 @@ int main(int argc, char* argv[]) {
             return StrCmpLogicalW(wa.c_str(), wb.c_str()) < 0;
         });
     if (files.empty()) { std::cout << "No .YUV files found.\n"; return 0; }
+
+    // 如果是命令行执行 SimpleYUVPlayer .，自动解析第一个文件名的宽高
+    if (argc == 2 && std::string(argv[1]) == "." || argc == 1) {
+        int w = WIDTH, h = HEIGHT;
+        parseWHFromFilename(fs::path(files[0]).filename().string(), w, h);
+        WIDTH = w;
+        HEIGHT = h;
+        STRIDE = WIDTH;
+        //打印确认
+        std::cout << "Change to: Width=" << WIDTH << " Height=" << HEIGHT
+            << " Stride=" << STRIDE
+            << " Folder=" << folder << std::endl;
+    }
 
     int defaultWinW = 900;
     int defaultWinH = 650;
