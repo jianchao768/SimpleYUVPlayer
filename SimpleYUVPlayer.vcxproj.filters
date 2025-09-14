@@ -51,4 +51,7 @@
     <Image Include="icon1.ico" />
     <Image Include="icon\y1_48.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
 </Project>
